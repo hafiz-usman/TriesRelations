@@ -10,7 +10,6 @@ using namespace std;
 
 const int c_numAlphabetChars = 26;
 
-
 struct Node;
 
 struct Element
