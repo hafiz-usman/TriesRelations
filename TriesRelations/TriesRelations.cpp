@@ -4,203 +4,190 @@
 #include "stdafx.h"
 #include <iostream>
 #include <vector>
+#include <queue>
 #include <string>
+#include <cassert>
 
 using namespace std;
 
-const int c_numAlphabetChars = 26;
-
-struct Node;
-
-struct Element
-{
-    bool isWord;
-    Node* next;
-    Element() :
-        isWord(false),
-        next(nullptr)
-    {}
-};
-
-struct Node
-{
-    vector<Element> alpha;
-    Node()
-    {
-        alpha.resize(c_numAlphabetChars);
-    }
-};
 
 class Trie
 {
+    struct Node;
+    struct Element
+    {
+        bool isWord;
+        Node* next;
+        Element() :
+            isWord(false),
+            next(nullptr)
+        {}
+    };
+
+    struct Node
+    {
+        vector<Element> v;
+
+        Node()
+        {
+            v.resize(c_maxCharsSupported);
+        }
+    };
+
 public:
     Trie() :
         _pSentinal(&_sentinal)
-    {}
-
-    /** Inserts a word into the trie. */
-    void insert(string word)
     {
-        if (word.length() == 0)
-        {
-            return;
-        }
-
-        Node* _runner = _pSentinal;
-        Node* prev = nullptr;
-        int iChar = -1;
-        for (auto ch : word)
-        {
-            iChar = _getCharIndex(ch);
-            if (_runner->alpha[iChar].next == nullptr)
-            {
-                _runner->alpha[iChar].next = new Node();
-            }
-            prev = _runner;
-            _runner = _runner->alpha[iChar].next;
-        }
-        prev->alpha[iChar].isWord = true;
     }
 
-    /** Returns if the word is in the trie. */
-    bool search(string word)
+    ~Trie()
     {
-        if (word.length() == 0)
-        {
-            return false;
-        }
+        // todo!
+    }
 
-        Node* prev = nullptr;
-        Node* runner = _pSentinal;
-        int iChar = -1;
-        for (auto ch : word)
+    bool insert(string& search)
+    {
+        Node* prev = _pSentinal;
+        Node* temp = _pSentinal;
+        int index = -1;
+        for (int i = 0; i < search.length(); ++i)
         {
-            iChar = _getCharIndex(ch);
-            if (runner->alpha[iChar].next == nullptr)
+            char ch = search[i];
+            index = _getCharIndex(ch);
+            assert(index != -1);
+            if (temp->v[index].next == nullptr)
+            {
+                temp->v[index].next = new Node();
+            }
+            prev = temp;
+            temp = temp->v[index].next;
+        }
+        prev->v[index].isWord = true;
+        return true;
+    }
+
+    bool search(string& search)
+    {
+        // todo: empty out search() and startsWith() and use a helper, say, find() method
+        Node* prev = _pSentinal;
+        Node* temp = _pSentinal;
+        int index = -1;
+
+        for (int i = 0; i < search.length(); ++i)
+        {
+            char ch = search[i];
+            index = _getCharIndex(ch);
+            assert(index != -1);
+            if (temp->v[index].next == nullptr)
             {
                 return false;
             }
-            prev = runner;
-            runner = runner->alpha[iChar].next;
+            prev = temp;
+            temp = temp->v[index].next;
         }
-        return prev->alpha[iChar].isWord;
+        return (prev->v[index].isWord);
     }
 
-    /** Returns if there is any word in the trie that starts with the given prefix. */
-    bool startsWith(string prefix)
+    bool startsWith(string& pre)
     {
-        if (prefix.length() == 0)
-        {
-            return false;
-        }
+        // todo: empty out search() and startsWith() and use a helper, say, find() method
+        Node* temp = _pSentinal;
+        int index = -1;
 
-        Node* runner = _pSentinal;
-        int iChar = -1;
-        for (auto ch : prefix)
+        for (int i = 0; i < pre.length(); ++i)
         {
-            iChar = _getCharIndex(ch);
-            if (runner->alpha[iChar].next == nullptr)
+            char ch = pre[i];
+            index = _getCharIndex(ch);
+            assert(index != -1);
+            if (temp->v[index].next == nullptr)
             {
                 return false;
             }
-            runner = runner->alpha[iChar].next;
+            temp = temp->v[index].next;
         }
         return true;
     }
 
 private:
-    Node _sentinal;
+    static const int c_maxCharsSupported = 26;
     Node* const _pSentinal;
+    Node _sentinal;
 
     int _getCharIndex(char ch)
     {
-        int temp = ch - 'a';
-        if (temp < 0 || temp >= c_numAlphabetChars)
+        if (ch < 'a' || ch > 'z')
         {
-            // unsupported char
             return -1;
         }
-        return temp;
+        return (ch - 'a');
+    }
+    char _getChar(int index)
+    {
+        return ('a' + index);
     }
 };
+
+void testTrieBVT()
+{
+    string temp;
+    Trie t;
+    vector<string> input{
+        "a",
+        "aa",
+        "aaa",
+        "ab",
+        "b",
+        "ba",
+        "baba",
+        "abab",
+    };
+
+    for (int i = 0; i < input.size(); ++i)
+    {
+        t.insert(input[i]);
+    }
+
+    for (int i = 0; i < input.size(); ++i)
+    {
+        temp = input[i];
+        assert(t.search(temp) == true);
+    }
+    temp = "aaaa";
+    assert(t.search(temp) == false);
+    temp = "aba";
+    assert(t.search(temp) == false);
+    temp = "bb";
+    assert(t.search(temp) == false);
+    temp = "babab";
+    assert(t.search(temp) == false);
+
+    for (int i = 0; i < input.size(); ++i)
+    {
+        string temp = input[i];
+        assert(t.startsWith(temp) == true);
+    }
+    temp = "aaaa";
+    assert(t.startsWith(temp) == false);
+    temp = "aba";
+    assert(t.startsWith(temp) == true);
+    temp = "bb";
+    assert(t.startsWith(temp) == false);
+    temp = "babab";
+    assert(t.startsWith(temp) == false);
+    temp = "a";
+    assert(t.startsWith(temp) == true);
+    temp = "aa";
+    assert(t.startsWith(temp) == true);
+    temp = "aaa";
+    assert(t.startsWith(temp) == true);
+    temp = "baa";
+    assert(t.startsWith(temp) == false);
+}
 
 
 int main()
 {
-    vector<string> input
-    {
-        "hello",
-        "hellokitty",
-    };
-    int count = 0;
-    string temp;
-    Trie t1;
-
-    if (input.size() == 0)
-    {
-        do
-        {
-            cout << "INSERT: " << endl;
-            cout << "String [" << count + 1 << "]: ";
-            getline(cin, temp);
-            if (temp.length() == 0)
-            {
-                break;
-            }
-            t1.insert(temp);
-            input.push_back(temp);
-            count++;
-        } while (true);
-    }
-    else
-    {
-        for (auto str : input)
-        {
-            t1.insert(str);
-        }
-    }
-
-    do
-    {
-        cout << endl;
-        cout << "1) Search word" << endl;
-        cout << "2) Search prefix" << endl;
-        cout << "3) Dump word list" << endl;
-        cout << "> ";
-        getline(cin, temp);
-        if (temp.length() == 0)
-        {
-            break;
-        }
-        int choice = stoi(temp);
-        bool found = false;
-        switch (choice)
-        {
-        case 1:
-            cout << "Enter search word: ";
-            getline(cin, temp);
-            found = t1.search(temp);
-            cout << "Found = " << found << endl;
-            break;
-        case 2:
-            cout << "Enter search prefix: ";
-            getline(cin, temp);
-            found = t1.startsWith(temp);
-            cout << "Found = " << found << endl;
-            break;
-        case 3:
-            cout << "Trie WORDS: " << endl;
-            for (int i = 0; i < input.size(); i++)
-            {
-                cout << "  ";
-                cout << input[i] << endl;
-            }
-            break;
-        default:
-            break;
-        }
-    } while (true);
-
+    testTrieBVT();
     return 0;
 }
 
