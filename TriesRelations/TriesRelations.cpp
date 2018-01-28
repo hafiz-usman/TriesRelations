@@ -6,6 +6,7 @@
 #include <vector>
 #include <queue>
 #include <string>
+#include <memory>
 #include <cassert>
 
 using namespace std;
@@ -13,22 +14,22 @@ using namespace std;
 
 class Trie
 {
-    struct Node;
+    struct TrieNode;
     struct Element
     {
         bool isWord;
-        Node* next;
+        unique_ptr<TrieNode> next;
         Element() :
             isWord(false),
             next(nullptr)
         {}
     };
 
-    struct Node
+    struct TrieNode
     {
         vector<Element> v;
 
-        Node()
+        TrieNode()
         {
             v.resize(c_maxCharsSupported);
         }
@@ -42,13 +43,12 @@ public:
 
     ~Trie()
     {
-        // todo!
     }
 
     bool insert(string& search)
     {
-        Node* prev = _pSentinal;
-        Node* temp = _pSentinal;
+        TrieNode* prev = _pSentinal;
+        TrieNode* temp = _pSentinal;
         int index = -1;
         for (int i = 0; i < search.length(); ++i)
         {
@@ -57,10 +57,10 @@ public:
             assert(index != -1);
             if (temp->v[index].next == nullptr)
             {
-                temp->v[index].next = new Node();
+                temp->v[index].next = make_unique<TrieNode>();
             }
             prev = temp;
-            temp = temp->v[index].next;
+            temp = temp->v[index].next.get();
         }
         prev->v[index].isWord = true;
         return true;
@@ -69,8 +69,8 @@ public:
     bool search(string& search)
     {
         // todo: empty out search() and startsWith() and use a helper, say, find() method
-        Node* prev = _pSentinal;
-        Node* temp = _pSentinal;
+        TrieNode* prev = _pSentinal;
+        TrieNode* temp = _pSentinal;
         int index = -1;
 
         for (int i = 0; i < search.length(); ++i)
@@ -83,7 +83,7 @@ public:
                 return false;
             }
             prev = temp;
-            temp = temp->v[index].next;
+            temp = temp->v[index].next.get();
         }
         return (prev->v[index].isWord);
     }
@@ -91,7 +91,7 @@ public:
     bool startsWith(string& pre)
     {
         // todo: empty out search() and startsWith() and use a helper, say, find() method
-        Node* temp = _pSentinal;
+        TrieNode* temp = _pSentinal;
         int index = -1;
 
         for (int i = 0; i < pre.length(); ++i)
@@ -103,15 +103,15 @@ public:
             {
                 return false;
             }
-            temp = temp->v[index].next;
+            temp = temp->v[index].next.get();
         }
         return true;
     }
 
 private:
     static const int c_maxCharsSupported = 26;
-    Node* const _pSentinal;
-    Node _sentinal;
+    TrieNode* const _pSentinal;
+    TrieNode _sentinal;
 
     int _getCharIndex(char ch)
     {
